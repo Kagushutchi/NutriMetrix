@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "11818107971",
+    "project_id": "nutrimetrix-3eb5f",
+    "storage_bucket": "nutrimetrix-3eb5f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:11818107971:android:bbc007c1bcec6e91ad80f6",
+        "android_client_info": {
+          "package_name": "com.example.nutrimetrix"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBrBBJN_KEBbATMxor_1eaqQy12E1i0V5Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
