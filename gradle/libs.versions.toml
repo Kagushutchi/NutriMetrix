@@ -111,12 +111,14 @@ androidx-espresso-core              = { group = "androidx.test.espresso", name =
 androidx-ui-tooling                 = { group = "androidx.compose.ui",name = "ui-tooling" }
 androidx-ui-test-manifest           = { group = "androidx.compose.ui",name = "ui-test-manifest" }
 
+androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 
 [plugins]
 # ── Build ─────────────────────────────────────────────────────────────────────
 android-application     = { id = "com.android.application",                version.ref = "agp" }
 kotlin-android          = { id = "org.jetbrains.kotlin.android",            version.ref = "kotlin" }
 kotlin-compose          = { id = "org.jetbrains.kotlin.plugin.compose",     version.ref = "kotlin" }
+
 
 # ── KSP (Room + Hilt usan esto en lugar de kapt) ──────────────────────────────
 ksp                     = { id = "com.google.devtools.ksp",                 version.ref = "ksp" }

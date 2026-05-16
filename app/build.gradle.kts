@@ -7,6 +7,10 @@ plugins {
     alias(libs.plugins.google.services)
 }
 
+kotlin {
+    jvmToolchain(21)
+}
+
 android {
     namespace = "com.example.nutrimetrix"
     compileSdk = 35
@@ -22,6 +26,11 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 }
 
@@ -83,4 +92,5 @@ dependencies {
     testImplementation(libs.turbine)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    implementation(libs.androidx.material.icons.extended)
 }

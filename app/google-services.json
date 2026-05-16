@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "11818107971",
+    "project_id": "nutrimetrix-3eb5f",
+    "storage_bucket": "nutrimetrix-3eb5f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:11818107971:android:bbc007c1bcec6e91ad80f6",
+        "android_client_info": {
+          "package_name": "com.example.nutrimetrix"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "11818107971-io1b3kejcaqcudu5ic7o6s3nu0jt8mvu.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.nutrimetrix",
+            "certificate_hash": "0883d1d59f3382e02110f41d9f57a477ba3d8c5f"
+          }
+        },
+        {
+          "client_id": "11818107971-daa41on6cof8snortn84qt9o8d20muva.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBrBBJN_KEBbATMxor_1eaqQy12E1i0V5Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "11818107971-daa41on6cof8snortn84qt9o8d20muva.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

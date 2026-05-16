@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.example.nutrimetrix" />
+                  <option name="mobileSdkAppId" value="1:11818107971:android:bbc007c1bcec6e91ad80f6" />
+                  <option name="projectId" value="nutrimetrix-3eb5f" />
+                  <option name="projectNumber" value="11818107971" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />
