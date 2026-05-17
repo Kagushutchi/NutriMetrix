@@ -15,10 +15,10 @@
       </SelectionState>
       <SelectionState runConfigName="SplashScreenPreview">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-05-16T06:14:33.712813300Z">
+        <DropdownSelection timestamp="2026-05-17T05:45:34.966552500Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\gfage\.android\avd\Medium_Phone.avd" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=ZY22GWGLV3" />
             </handle>
           </Target>
         </DropdownSelection>
