@@ -93,4 +93,5 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     implementation(libs.androidx.material.icons.extended)
+    implementation("com.google.android.gms:play-services-auth:21.2.0")
 }
