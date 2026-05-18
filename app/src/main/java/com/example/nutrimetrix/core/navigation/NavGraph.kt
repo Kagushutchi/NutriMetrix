@@ -19,6 +19,7 @@ import com.example.nutrimetrix.ui.auth.register.RegisterStep3Screen
 import com.example.nutrimetrix.ui.auth.register.RegisterStep4Screen
 import com.example.nutrimetrix.ui.components.BottomNavBar
 import com.example.nutrimetrix.ui.home.HomeScreen
+import com.example.nutrimetrix.ui.profile.ProfileScreen
 
 sealed class Screen(val route: String) {
     object Login          : Screen("login")
@@ -125,7 +126,11 @@ fun NavGraph(
                 )
             }
 
-            composable(Screen.Profile.route)  { PlaceholderScreen("Perfil") }
+            composable(Screen.Profile.route) {
+                ProfileScreen(
+                    onAddMeal = { navController.navigate(Screen.FoodList.route) }
+                )
+            }
             composable(Screen.Camera.route)   { PlaceholderScreen("Cámara") }
             composable(Screen.Gallery.route)  { PlaceholderScreen("Galería") }
             composable(Screen.Settings.route) { PlaceholderScreen("Ajustes") }
