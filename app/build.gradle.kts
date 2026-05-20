@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -21,7 +23,18 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
+        val localProps = Properties()
+        val localFile  = rootProject.file("local.properties")
+        if (localFile.exists()) localProps.load(localFile.inputStream())
+
+        buildConfigField(
+            "String",
+            "USDA_API_KEY",
+            "\"${localProps.getProperty("USDA_API_KEY", "")}\""
+        )
     }
+
+
 
     buildFeatures {
         compose = true
@@ -46,7 +59,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 
-    // collectAsStateWithLifecycle (obligatorio según consigna)
+    // collectAsStateWithLifecycle
     implementation(libs.androidx.lifecycle.runtime.compose)
 
     // ── Navegación ───────────────────────────────────────────────
