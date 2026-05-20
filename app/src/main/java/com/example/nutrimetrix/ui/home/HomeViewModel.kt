@@ -57,7 +57,7 @@ class HomeViewModel @Inject constructor(
                 val user = firebaseAuth.currentUser
                     ?: throw Exception("Usuario no autenticado")
 
-                // Primer nombre desde Google (displayName = "Juan Pérez" → "Juan")
+                // Primer nombre desde Google
                 val firstName = user.displayName
                     ?.split(" ")
                     ?.firstOrNull()
@@ -77,8 +77,6 @@ class HomeViewModel @Inject constructor(
                 val carbosObjetivo    = userDoc.getDouble("carbohidratos")   ?: 0.0
                 val grasasObjetivo    = userDoc.getDouble("grasas")          ?: 0.0
 
-                // Comidas del día desde Firestore
-                // Cuando implementes Room en feature/room-offline-first,
                 // este fetch se reemplaza por un Flow de Room
                 val hoy = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
                     .format(java.util.Date())

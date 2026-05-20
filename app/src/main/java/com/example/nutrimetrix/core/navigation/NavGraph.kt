@@ -18,6 +18,7 @@ import com.example.nutrimetrix.ui.auth.register.RegisterStep2Screen
 import com.example.nutrimetrix.ui.auth.register.RegisterStep3Screen
 import com.example.nutrimetrix.ui.auth.register.RegisterStep4Screen
 import com.example.nutrimetrix.ui.components.BottomNavBar
+import com.example.nutrimetrix.ui.food.list.FoodListScreen
 import com.example.nutrimetrix.ui.home.HomeScreen
 import com.example.nutrimetrix.ui.profile.ProfileScreen
 import com.example.nutrimetrix.ui.settings.SettingsScreen
@@ -146,7 +147,11 @@ fun NavGraph(
             }
 
             // ── Pantallas secundarias (sin BottomNavBar) ──────────────────────
-            composable(Screen.FoodList.route)   { PlaceholderScreen("Armar platillo") }
+            composable(Screen.FoodList.route) {
+                FoodListScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
             composable(Screen.FoodDetail.route) { PlaceholderScreen("Detalle alimento") }
         }
     }
