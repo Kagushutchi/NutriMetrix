@@ -7,10 +7,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.nutrimetrix.ui.auth.AuthViewModel
 import com.example.nutrimetrix.ui.auth.login.LoginScreen
 import com.example.nutrimetrix.ui.auth.register.RegisterResultScreen
@@ -18,6 +20,7 @@ import com.example.nutrimetrix.ui.auth.register.RegisterStep2Screen
 import com.example.nutrimetrix.ui.auth.register.RegisterStep3Screen
 import com.example.nutrimetrix.ui.auth.register.RegisterStep4Screen
 import com.example.nutrimetrix.ui.components.BottomNavBar
+import com.example.nutrimetrix.ui.food.detail.FoodDetailScreen
 import com.example.nutrimetrix.ui.food.list.FoodListScreen
 import com.example.nutrimetrix.ui.gallery.GalleryScreen
 import com.example.nutrimetrix.ui.home.HomeScreen
@@ -166,7 +169,14 @@ fun NavGraph(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
-            composable(Screen.FoodDetail.route) { PlaceholderScreen("Detalle alimento") }
+            composable(
+                route     = Screen.FoodDetail.route,
+                arguments = listOf(navArgument("foodId") { type = NavType.StringType })
+            ) {
+                FoodDetailScreen(
+                    onBack = { navController.popBackStack() }
+                )
+            }
         }
     }
 }
