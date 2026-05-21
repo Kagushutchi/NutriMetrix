@@ -38,13 +38,18 @@ class SettingsViewModel @Inject constructor(
                 // 1. Cerrar sesión en Firebase Auth
                 firebaseAuth.signOut()
 
-                // 2. Revocar también la sesión de Google para que
-                //    la próxima vez muestre el picker de cuentas
-                val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                    .requestEmail()
-                    .build()
-                GoogleSignIn.getClient(context, gso).signOut().await()
+                // 2. Intentar revocar la sesión de Google
+                try {
+                    val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                        .requestEmail()
+                        .build()
+                    GoogleSignIn.getClient(context, gso).signOut().await()
+                } catch (e: Exception) {
+                    // Si falla revocar Google (ej. sin internet), ignoro
+                    // para permitir que el flujo de logout continúe.
+                }
 
+                // 3. Notificar a la vista que ya puede navegar al Login
                 _uiState.value = SettingsUiState.LoggedOut
             } catch (e: Exception) {
                 _uiState.value = SettingsUiState.Error(e.message ?: "Error al cerrar sesión")

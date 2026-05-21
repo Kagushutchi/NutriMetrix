@@ -54,7 +54,6 @@ fun LoginScreen(
                     .getResult(ApiException::class.java)
                 account.idToken?.let { viewModel.signInWithGoogle(it) }
             } catch (e: ApiException) {
-                // el ViewModel lo maneja
             }
         }
     }

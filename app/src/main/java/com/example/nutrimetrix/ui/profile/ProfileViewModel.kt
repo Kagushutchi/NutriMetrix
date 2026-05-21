@@ -39,7 +39,7 @@ class ProfileViewModel @Inject constructor(
         cargarPerfil()
     }
 
-    private fun cargarPerfil() {
+     fun cargarPerfil() {
         viewModelScope.launch {
             try {
                 val uid = firebaseAuth.currentUser?.uid

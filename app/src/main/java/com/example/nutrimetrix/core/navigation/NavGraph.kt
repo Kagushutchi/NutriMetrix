@@ -145,8 +145,6 @@ fun NavGraph(
                     }
                 )
             }
-
-            // ── Pantallas secundarias (sin BottomNavBar) ──────────────────────
             composable(Screen.FoodList.route) {
                 FoodListScreen(
                     onNavigateBack = { navController.popBackStack() }
