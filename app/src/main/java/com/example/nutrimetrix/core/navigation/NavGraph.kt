@@ -21,6 +21,7 @@ import com.example.nutrimetrix.ui.components.BottomNavBar
 import com.example.nutrimetrix.ui.food.list.FoodListScreen
 import com.example.nutrimetrix.ui.gallery.GalleryScreen
 import com.example.nutrimetrix.ui.home.HomeScreen
+import com.example.nutrimetrix.ui.home.HomeViewModel
 import com.example.nutrimetrix.ui.profile.ProfileScreen
 import com.example.nutrimetrix.ui.settings.SettingsScreen
 
@@ -124,8 +125,15 @@ fun NavGraph(
 
             // ── Pantallas principales (con BottomNavBar) ──────────────────────
             composable(Screen.Home.route) {
+                // HomeViewModel vive en el backstack entry del Home
+                // Al volver de FoodList, Compose lo recrea y recarga los datos
+                val homeViewModel: HomeViewModel = hiltViewModel()
                 HomeScreen(
-                    onAddMeal = { navController.navigate(Screen.FoodList.route) }
+                    onAddMeal     = { navController.navigate(Screen.FoodList.route) },
+                    onComidaClick = { comidaId ->
+                        navController.navigate(Screen.FoodDetail.createRoute(comidaId))
+                    },
+                    viewModel     = homeViewModel
                 )
             }
 
