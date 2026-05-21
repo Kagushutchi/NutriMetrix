@@ -1,6 +1,7 @@
 package com.example.nutrimetrix.ui.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -8,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,8 +31,9 @@ import com.example.nutrimetrix.ui.theme.NutriMetrixTheme
 
 @Composable
 fun HomeScreen(
-    onAddMeal: () -> Unit,
-    viewModel: HomeViewModel = hiltViewModel()
+    onAddMeal:     () -> Unit,
+    onComidaClick: (String) -> Unit = {},
+    viewModel:     HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -42,26 +45,24 @@ fun HomeScreen(
         }
         is HomeUiState.Error -> {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(
-                    text  = (uiState as HomeUiState.Error).message,
-                    color = Color.Red
-                )
+                Text((uiState as HomeUiState.Error).message, color = Color.Red)
             }
         }
         is HomeUiState.Success -> {
-            val data = (uiState as HomeUiState.Success)
+            val data = uiState as HomeUiState.Success
             HomeContent(
-                firstName        = data.firstName,
-                caloriasConsumidas = data.caloriasConsumidas,
-                caloriasObjetivo = data.caloriasObjetivo,
-                proteinasConsumidas  = data.proteinasConsumidas,
-                proteinasObjetivo    = data.proteinasObjetivo,
-                carbosConsumidos     = data.carbosConsumidos,
-                carbosObjetivo       = data.carbosObjetivo,
-                grasasConsumidas     = data.grasasConsumidas,
-                grasasObjetivo       = data.grasasObjetivo,
-                comidas          = data.comidas,
-                onAddMeal        = onAddMeal
+                firstName           = data.firstName,
+                caloriasConsumidas  = data.caloriasConsumidas,
+                caloriasObjetivo    = data.caloriasObjetivo,
+                proteinasConsumidas = data.proteinasConsumidas,
+                proteinasObjetivo   = data.proteinasObjetivo,
+                carbosConsumidos    = data.carbosConsumidos,
+                carbosObjetivo      = data.carbosObjetivo,
+                grasasConsumidas    = data.grasasConsumidas,
+                grasasObjetivo      = data.grasasObjetivo,
+                comidas             = data.comidas,
+                onAddMeal           = onAddMeal,
+                onComidaClick       = onComidaClick
             )
         }
     }
@@ -69,17 +70,18 @@ fun HomeScreen(
 
 @Composable
 private fun HomeContent(
-    firstName: String,
+    firstName:          String,
     caloriasConsumidas: Int,
-    caloriasObjetivo: Int,
-    proteinasConsumidas: Double,
-    proteinasObjetivo: Double,
-    carbosConsumidos: Double,
-    carbosObjetivo: Double,
-    grasasConsumidas: Double,
-    grasasObjetivo: Double,
-    comidas: List<ComidaResumen>,
-    onAddMeal: () -> Unit
+    caloriasObjetivo:   Int,
+    proteinasConsumidas:Double,
+    proteinasObjetivo:  Double,
+    carbosConsumidos:   Double,
+    carbosObjetivo:     Double,
+    grasasConsumidas:   Double,
+    grasasObjetivo:     Double,
+    comidas:            List<ComidaResumen>,
+    onAddMeal:          () -> Unit,
+    onComidaClick:      (String) -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
 
@@ -91,25 +93,14 @@ private fun HomeContent(
         ) {
             Spacer(Modifier.height(52.dp))
 
-            // ── Saludo ────────────────────────────────────────────────────────
-            Text(
-                text       = "Hola, $firstName",
-                fontSize   = 30.sp,
-                fontWeight = FontWeight.Bold,
-                color      = Color.Black
-            )
+            Text("Hola, $firstName", fontSize = 30.sp, fontWeight = FontWeight.Bold)
 
             Spacer(Modifier.height(20.dp))
 
-            // ── Card de calorías ──────────────────────────────────────────────
-            CaloriasCard(
-                consumidas = caloriasConsumidas,
-                objetivo   = caloriasObjetivo
-            )
+            CaloriasCard(consumidas = caloriasConsumidas, objetivo = caloriasObjetivo)
 
             Spacer(Modifier.height(28.dp))
 
-            // ── Macronutrientes ───────────────────────────────────────────────
             Text("Macronutrientes", fontSize = 18.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(12.dp))
 
@@ -124,46 +115,40 @@ private fun HomeContent(
 
             Spacer(Modifier.height(28.dp))
 
-            // ── Comidas del día ───────────────────────────────────────────────
             Text("Comidas de hoy", fontSize = 18.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(12.dp))
 
             if (comidas.isEmpty()) {
-                Text(
-                    text     = "Aún no registraste comidas hoy",
-                    color    = Color.Gray,
-                    fontSize = 14.sp
-                )
+                Text("Aún no registraste comidas hoy", color = Color.Gray, fontSize = 14.sp)
             } else {
                 comidas.forEach { comida ->
-                    ComidaItem(comida = comida)
-                    Spacer(Modifier.height(4.dp))
+                    ComidaItem(
+                        comida  = comida,
+                        onClick = { onComidaClick(comida.id) }
+                    )
                 }
             }
 
-            // Espacio para que el FAB no tape la última comida
             Spacer(Modifier.height(80.dp))
         }
 
-        // ── FAB + ─────────────────────────────────────────────────────────────
         FloatingActionButton(
-            onClick            = onAddMeal,
-            containerColor     = GreenPrimary,
-            contentColor       = Color.White,
-            shape              = CircleShape,
-            modifier           = Modifier
+            onClick        = onAddMeal,
+            containerColor = GreenPrimary,
+            contentColor   = Color.White,
+            shape          = CircleShape,
+            modifier       = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(end = 20.dp, bottom = 80.dp)
         ) {
-            Text(text = "+", fontSize = 28.sp, fontWeight = FontWeight.Light)
+            Text("+", fontSize = 28.sp, fontWeight = FontWeight.Light)
         }
     }
 }
 
-// ── Card de calorías con gradiente ────────────────────────────────────────────
 @Composable
 private fun CaloriasCard(consumidas: Int, objetivo: Int) {
-    val progreso = if (objetivo > 0) (consumidas.toFloat() / objetivo).coerceIn(0f, 1f) else 0f
+    val progreso  = if (objetivo > 0) (consumidas.toFloat() / objetivo).coerceIn(0f, 1f) else 0f
     val restantes = (objetivo - consumidas).coerceAtLeast(0)
 
     Box(
@@ -174,54 +159,27 @@ private fun CaloriasCard(consumidas: Int, objetivo: Int) {
             .padding(20.dp)
     ) {
         Column {
-            Text(
-                text     = "Calorias de hoy",
-                color    = Color.White.copy(alpha = 0.85f),
-                fontSize = 14.sp
-            )
+            Text("Calorias de hoy", color = Color.White.copy(alpha = 0.85f), fontSize = 14.sp)
             Spacer(Modifier.height(8.dp))
-
             Row(verticalAlignment = Alignment.Bottom) {
-                Text(
-                    text       = "$consumidas",
-                    color      = Color.White,
-                    fontSize   = 42.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text     = "/$objetivo kcal",
-                    color    = Color.White.copy(alpha = 0.75f),
-                    fontSize = 18.sp,
-                    modifier = Modifier.padding(bottom = 6.dp, start = 4.dp)
-                )
+                Text("$consumidas", color = Color.White, fontSize = 42.sp, fontWeight = FontWeight.Bold)
+                Text("/$objetivo kcal", color = Color.White.copy(alpha = 0.75f), fontSize = 18.sp,
+                    modifier = Modifier.padding(bottom = 6.dp, start = 4.dp))
             }
-
             Spacer(Modifier.height(10.dp))
-
-            // Barra de progreso
             LinearProgressIndicator(
-                progress          = { progreso },
-                modifier          = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp)
-                    .clip(RoundedCornerShape(50)),
-                color             = Color.White,
-                trackColor        = Color.White.copy(alpha = 0.3f),
-                strokeCap         = StrokeCap.Round
+                progress  = { progreso },
+                modifier  = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(50)),
+                color     = Color.White,
+                trackColor= Color.White.copy(alpha = 0.3f),
+                strokeCap = StrokeCap.Round
             )
-
             Spacer(Modifier.height(10.dp))
-
-            Text(
-                text     = "Te quedan $restantes kcal para hoy",
-                color    = Color.White.copy(alpha = 0.85f),
-                fontSize = 13.sp
-            )
+            Text("Te quedan $restantes kcal para hoy", color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp)
         }
     }
 }
 
-// ── Card de macros ────────────────────────────────────────────────────────────
 @Composable
 private fun MacrosCard(
     proteinasConsumidas: Double, proteinasObjetivo: Double,
@@ -229,64 +187,33 @@ private fun MacrosCard(
     grasasConsumidas: Double,    grasasObjetivo: Double
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape    = RoundedCornerShape(16.dp),
-        colors   = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        modifier  = Modifier.fillMaxWidth(),
+        shape     = RoundedCornerShape(16.dp),
+        colors    = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            MacroRow(
-                label     = "Proteinas",
-                consumido = proteinasConsumidas,
-                objetivo  = proteinasObjetivo,
-                color     = Color(0xFFE53935)
-            )
+            MacroRow("Proteinas", proteinasConsumidas, proteinasObjetivo, Color(0xFFE53935))
             Spacer(Modifier.height(12.dp))
-            MacroRow(
-                label     = "CarboH",
-                consumido = carbosConsumidos,
-                objetivo  = carbosObjetivo,
-                color     = Color(0xFFFFA726)
-            )
+            MacroRow("CarboH",    carbosConsumidos,    carbosObjetivo,    Color(0xFFFFA726))
             Spacer(Modifier.height(12.dp))
-            MacroRow(
-                label     = "Grasas",
-                consumido = grasasConsumidas,
-                objetivo  = grasasObjetivo,
-                color     = Color(0xFFFFD600)
-            )
+            MacroRow("Grasas",    grasasConsumidas,    grasasObjetivo,    Color(0xFFFFD600))
         }
     }
 }
 
 @Composable
-private fun MacroRow(
-    label: String,
-    consumido: Double,
-    objetivo: Double,
-    color: Color
-) {
+private fun MacroRow(label: String, consumido: Double, objetivo: Double, color: Color) {
     val progreso = if (objetivo > 0) (consumido / objetivo).toFloat().coerceIn(0f, 1f) else 0f
-
     Column {
-        Row(
-            modifier       = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
+        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
             Text(label, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-            Text(
-                text     = "${"%.1f".format(consumido)}/${"%.1f".format(objetivo)}g",
-                fontSize = 12.sp,
-                color    = Color.Gray
-            )
+            Text("${"%.1f".format(consumido)}/${"%.1f".format(objetivo)}g", fontSize = 12.sp, color = Color.Gray)
         }
         Spacer(Modifier.height(4.dp))
         LinearProgressIndicator(
             progress   = { progreso },
-            modifier   = Modifier
-                .fillMaxWidth()
-                .height(7.dp)
-                .clip(RoundedCornerShape(50)),
+            modifier   = Modifier.fillMaxWidth().height(7.dp).clip(RoundedCornerShape(50)),
             color      = color,
             trackColor = Color(0xFFEEEEEE),
             strokeCap  = StrokeCap.Round
@@ -294,74 +221,57 @@ private fun MacroRow(
     }
 }
 
-// ── Item de comida ────────────────────────────────────────────────────────────
 @Composable
-private fun ComidaItem(comida: ComidaResumen) {
+private fun ComidaItem(comida: ComidaResumen, onClick: () -> Unit) {
     Row(
-        modifier       = Modifier
+        modifier          = Modifier
             .fillMaxWidth()
+            .clickable { onClick() }
             .padding(vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Ícono circular verde con check
         Box(
-            modifier         = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
+            modifier = Modifier.size(40.dp).clip(CircleShape)
                 .background(GreenPrimary.copy(alpha = 0.15f)),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector        = Icons.Default.Check,
-                contentDescription = null,
-                tint               = GreenPrimary,
-                modifier           = Modifier.size(20.dp)
-            )
+            Icon(Icons.Default.Check, contentDescription = null,
+                tint = GreenPrimary, modifier = Modifier.size(20.dp))
         }
-
         Spacer(Modifier.width(12.dp))
-
         Column(modifier = Modifier.weight(1f)) {
-            Text(comida.nombre, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
-            Text(
-                text     = comida.alimentos,
-                fontSize = 12.sp,
-                color    = Color.Gray
-            )
+            Text(comida.nombre,    fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+            Text(comida.alimentos, fontSize   = 12.sp, color = Color.Gray)
         }
-
-        Text(
-            text       = "${comida.calorias}kcal",
-            color      = GreenPrimary,
-            fontWeight = FontWeight.SemiBold,
-            fontSize   = 14.sp
-        )
+        Text("${comida.calorias}kcal", color = GreenPrimary,
+            fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+        Icon(Icons.Default.ChevronRight, contentDescription = null,
+            tint = Color.LightGray, modifier = Modifier.size(18.dp))
     }
-
     HorizontalDivider(color = Color(0xFFF0F0F0))
 }
 
-// ── Preview ───────────────────────────────────────────────────────────────────
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun HomeScreenPreview() {
     NutriMetrixTheme {
         HomeContent(
-            firstName            = "Ezequiel",
-            caloriasConsumidas   = 1650,
-            caloriasObjetivo     = 2450,
-            proteinasConsumidas  = 85.0,
-            proteinasObjetivo    = 129.5,
-            carbosConsumidos     = 180.0,
-            carbosObjetivo       = 280.0,
-            grasasConsumidas     = 45.0,
-            grasasObjetivo       = 60.0,
+            firstName           = "Ezequiel",
+            caloriasConsumidas  = 1650,
+            caloriasObjetivo    = 2450,
+            proteinasConsumidas = 85.0,
+            proteinasObjetivo   = 129.5,
+            carbosConsumidos    = 180.0,
+            carbosObjetivo      = 280.0,
+            grasasConsumidas    = 45.0,
+            grasasObjetivo      = 60.0,
             comidas = listOf(
-                ComidaResumen("Desayuno",  "Avena, banana, almendras",   450),
-                ComidaResumen("Almuerzo",  "Pollo, arroz, ensalada",     680),
-                ComidaResumen("Merienda",  "Yogur, frutas",              220)
+                ComidaResumen("1", "Desayuno", "Avena, banana, almendras", 450),
+                ComidaResumen("2", "Almuerzo", "Pollo, arroz, ensalada",  680),
+                ComidaResumen("3", "Merienda", "Yogur, frutas",           220)
             ),
-            onAddMeal = {}
+            onAddMeal     = {},
+            onComidaClick = {}
         )
     }
 }

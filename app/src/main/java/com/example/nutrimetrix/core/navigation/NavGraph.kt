@@ -19,6 +19,7 @@ import com.example.nutrimetrix.ui.auth.register.RegisterStep3Screen
 import com.example.nutrimetrix.ui.auth.register.RegisterStep4Screen
 import com.example.nutrimetrix.ui.components.BottomNavBar
 import com.example.nutrimetrix.ui.food.list.FoodListScreen
+import com.example.nutrimetrix.ui.gallery.GalleryScreen
 import com.example.nutrimetrix.ui.home.HomeScreen
 import com.example.nutrimetrix.ui.profile.ProfileScreen
 import com.example.nutrimetrix.ui.settings.SettingsScreen
@@ -134,7 +135,14 @@ fun NavGraph(
                 )
             }
             composable(Screen.Camera.route)   { PlaceholderScreen("Cámara") }
-            composable(Screen.Gallery.route)  { PlaceholderScreen("Galería") }
+            composable(Screen.Gallery.route) {
+                GalleryScreen(
+                    onComidaClick = { comidaId ->
+                        navController.navigate(Screen.FoodDetail.createRoute(comidaId))
+                    },
+                    onAddMeal = { navController.navigate(Screen.FoodList.route) }
+                )
+            }
             composable(Screen.Settings.route) {
                 SettingsScreen(
                     onAddMeal = { navController.navigate(Screen.FoodList.route) },
