@@ -32,6 +32,12 @@ android {
             "USDA_API_KEY",
             "\"${localProps.getProperty("USDA_API_KEY", "")}\""
         )
+
+        buildConfigField(
+            "String",
+            "GEMINI_API_KEY",
+            "\"${localProps.getProperty("GEMINI_API_KEY", "")}\""
+        )
     }
 
 
@@ -107,4 +113,17 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     implementation(libs.androidx.material.icons.extended)
     implementation("com.google.android.gms:play-services-auth:21.2.0")
+// CameraX
+    implementation("androidx.camera:camera-camera2:1.3.4")
+    implementation("androidx.camera:camera-lifecycle:1.3.4")
+    implementation("androidx.camera:camera-view:1.3.4")
+
+// Coil — para mostrar la foto capturada
+    implementation("io.coil-kt:coil-compose:2.6.0")
+
+// Accompanist — permiso de cámara con Compose
+    implementation("com.google.accompanist:accompanist-permissions:0.34.0")
+    implementation("com.google.guava:guava:32.1.3-android")
+// Firebase Storage — para guardar la imagen
+    implementation("com.google.firebase:firebase-storage-ktx")
 }

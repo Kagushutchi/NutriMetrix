@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!--
+        cache-path: apunta al getCacheDir() de la app
+        Acá CameraX va a guardar las fotos temporales antes de subirlas
+    -->
+    <cache-path
+        name="camera_photos"
+        path="." />
+</paths>
