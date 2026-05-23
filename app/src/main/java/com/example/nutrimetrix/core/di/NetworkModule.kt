@@ -1,5 +1,6 @@
 package com.example.nutrimetrix.core.di
 
+import com.example.nutrimetrix.data.remote.api.GeminiApiService
 import com.example.nutrimetrix.data.remote.api.UsdaApiService
 import dagger.Module
 import dagger.Provides
@@ -9,14 +10,15 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    private const val USDA_BASE_URL = "https://api.nal.usda.gov/"
-
+    // OkHttp compartido por ambos clientes con timeout más largo para Gemini
     @Provides
     @Singleton
     fun provideOkHttpClient(): OkHttpClient =
@@ -26,19 +28,40 @@ object NetworkModule {
                     level = HttpLoggingInterceptor.Level.BODY
                 }
             )
+            .callTimeout(60, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
             .build()
 
+    // ── USDA ──────────────────────────────────────────────────────────────────
     @Provides
     @Singleton
-    fun provideRetrofit(client: OkHttpClient): Retrofit =
+    @Named("usda")
+    fun provideUsdaRetrofit(client: OkHttpClient): Retrofit =
         Retrofit.Builder()
-            .baseUrl(USDA_BASE_URL)
+            .baseUrl("https://api.nal.usda.gov/")
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
     @Provides
     @Singleton
-    fun provideUsdaApiService(retrofit: Retrofit): UsdaApiService =
+    fun provideUsdaApiService(@Named("usda") retrofit: Retrofit): UsdaApiService =
         retrofit.create(UsdaApiService::class.java)
+
+    // ── Gemini ────────────────────────────────────────────────────────────────
+    @Provides
+    @Singleton
+    @Named("gemini")
+    fun provideGeminiRetrofit(client: OkHttpClient): Retrofit =
+        Retrofit.Builder()
+            .baseUrl("https://generativelanguage.googleapis.com/")
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+    @Provides
+    @Singleton
+    fun provideGeminiApiService(@Named("gemini") retrofit: Retrofit): GeminiApiService =
+        retrofit.create(GeminiApiService::class.java)
 }

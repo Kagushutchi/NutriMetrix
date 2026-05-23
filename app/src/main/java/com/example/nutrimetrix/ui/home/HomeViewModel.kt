@@ -68,55 +68,65 @@ class HomeViewModel @Inject constructor(
                 val hoy = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
                     .format(java.util.Date())
 
-                val comidasSnapshot = firestore
+                // AQUÍ EL CAMBIO MAGNÍFICO: Usar SnapshotListener para tiempo real
+                firestore
                     .collection("usuarios").document(uid)
                     .collection("comidas")
                     .whereGreaterThanOrEqualTo("fecha", hoy)
-                    .get().await()
+                    .addSnapshotListener { snapshot, error ->
 
-                var caloriasConsumidas  = 0
-                var proteinasConsumidas = 0.0
-                var carbosConsumidos    = 0.0
-                var grasasConsumidas    = 0.0
-                val listaComidas        = mutableListOf<ComidaResumen>()
+                        if (error != null) {
+                            _uiState.value = HomeUiState.Error(error.message ?: "Error al escuchar datos")
+                            return@addSnapshotListener
+                        }
 
-                for (doc in comidasSnapshot.documents) {
-                    val kcal      = (doc.getLong("totalKcal") ?: 0L).toInt()
-                    val proteinas = doc.getDouble("proteinas")     ?: 0.0
-                    val carbos    = doc.getDouble("carbohidratos")  ?: 0.0
-                    val grasas    = doc.getDouble("grasas")         ?: 0.0
-                    val nombre    = doc.getString("nombre")         ?: ""
-                    val tipo      = doc.getString("tipo")           ?: ""
+                        if (snapshot != null) {
+                            var caloriasConsumidas  = 0
+                            var proteinasConsumidas = 0.0
+                            var carbosConsumidos    = 0.0
+                            var grasasConsumidas    = 0.0
+                            val listaComidas        = mutableListOf<ComidaResumen>()
 
-                    caloriasConsumidas  += kcal
-                    proteinasConsumidas += proteinas
-                    carbosConsumidos    += carbos
-                    grasasConsumidas    += grasas
+                            for (doc in snapshot.documents) {
+                                // CORRECCIÓN DE CASTEO: Usamos getDouble para "totalKcal" porque así lo guardas en los ViewModels
+                                val kcal      = doc.getDouble("totalKcal")?.toInt() ?: 0
+                                val proteinas = doc.getDouble("proteinas")     ?: 0.0
+                                val carbos    = doc.getDouble("carbohidratos")  ?: 0.0
+                                val grasas    = doc.getDouble("grasas")         ?: 0.0
+                                val nombre    = doc.getString("nombre")         ?: ""
+                                val tipo      = doc.getString("tipo")           ?: ""
 
-                    listaComidas.add(
-                        ComidaResumen(
-                            id        = doc.id,   // ← necesario para navegar al detalle
-                            nombre    = tipo.replaceFirstChar { it.uppercase() },
-                            alimentos = nombre,
-                            calorias  = kcal
-                        )
-                    )
-                }
+                                caloriasConsumidas  += kcal
+                                proteinasConsumidas += proteinas
+                                carbosConsumidos    += carbos
+                                grasasConsumidas    += grasas
 
-                _uiState.value = HomeUiState.Success(
-                    firstName           = firstName,
-                    caloriasConsumidas  = caloriasConsumidas,
-                    caloriasObjetivo    = caloriasObjetivo,
-                    proteinasConsumidas = proteinasConsumidas,
-                    proteinasObjetivo   = proteinasObjetivo,
-                    carbosConsumidos    = carbosConsumidos,
-                    carbosObjetivo      = carbosObjetivo,
-                    grasasConsumidas    = grasasConsumidas,
-                    grasasObjetivo      = grasasObjetivo,
-                    comidas             = listaComidas
-                )
+                                listaComidas.add(
+                                    ComidaResumen(
+                                        id        = doc.id,
+                                        nombre    = tipo.replaceFirstChar { it.uppercase() },
+                                        alimentos = nombre,
+                                        calorias  = kcal
+                                    )
+                                )
+                            }
+
+                            _uiState.value = HomeUiState.Success(
+                                firstName           = firstName,
+                                caloriasConsumidas  = caloriasConsumidas,
+                                caloriasObjetivo    = caloriasObjetivo,
+                                proteinasConsumidas = proteinasConsumidas,
+                                proteinasObjetivo   = proteinasObjetivo,
+                                carbosConsumidos    = carbosConsumidos,
+                                carbosObjetivo      = carbosObjetivo,
+                                grasasConsumidas    = grasasConsumidas,
+                                grasasObjetivo      = grasasObjetivo,
+                                comidas             = listaComidas
+                            )
+                        }
+                    }
             } catch (e: Exception) {
-                _uiState.value = HomeUiState.Error(e.message ?: "Error al cargar datos")
+                _uiState.value = HomeUiState.Error(e.message ?: "Error al inicializar datos")
             }
         }
     }
