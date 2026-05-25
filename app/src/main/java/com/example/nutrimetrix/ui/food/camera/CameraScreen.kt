@@ -29,7 +29,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview as ComposePreview
+
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -41,7 +41,7 @@ import com.example.nutrimetrix.data.remote.dto.IngredienteDetectado
 import com.example.nutrimetrix.ui.theme.GreenDark
 import com.example.nutrimetrix.ui.theme.GreenLight
 import com.example.nutrimetrix.ui.theme.GreenPrimary
-import com.example.nutrimetrix.ui.theme.NutriMetrixTheme
+
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState

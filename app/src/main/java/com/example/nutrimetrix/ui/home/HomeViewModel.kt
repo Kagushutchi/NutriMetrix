@@ -68,7 +68,7 @@ class HomeViewModel @Inject constructor(
                 val hoy = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
                     .format(java.util.Date())
 
-                // AQUÍ EL CAMBIO MAGNÍFICO: Usar SnapshotListener para tiempo real
+                // Escuchar cambios en la colección de comidas del usuario
                 firestore
                     .collection("usuarios").document(uid)
                     .collection("comidas")
@@ -88,7 +88,7 @@ class HomeViewModel @Inject constructor(
                             val listaComidas        = mutableListOf<ComidaResumen>()
 
                             for (doc in snapshot.documents) {
-                                // CORRECCIÓN DE CASTEO: Usamos getDouble para "totalKcal" porque así lo guardas en los ViewModels
+
                                 val kcal      = doc.getDouble("totalKcal")?.toInt() ?: 0
                                 val proteinas = doc.getDouble("proteinas")     ?: 0.0
                                 val carbos    = doc.getDouble("carbohidratos")  ?: 0.0

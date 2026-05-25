@@ -3,10 +3,13 @@ package com.example.nutrimetrix.ui.home
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
+
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ChevronRight
@@ -68,6 +71,9 @@ fun HomeScreen(
     }
 }
 
+// Asegúrate de tener estos imports en tu HomeScreen.kt
+
+
 @Composable
 private fun HomeContent(
     firstName:          String,
@@ -85,53 +91,63 @@ private fun HomeContent(
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
 
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp)
+                .padding(horizontal = 20.dp),
+            // Mover los Spacers superior e inferior al contentPadding es una buena práctica en LazyColumn
+            contentPadding = PaddingValues(top = 52.dp, bottom = 80.dp)
         ) {
-            Spacer(Modifier.height(52.dp))
 
-            Text("Hola, $firstName", fontSize = 30.sp, fontWeight = FontWeight.Bold)
+            // 1. Contenido estático: Saludo y Calorías
+            item {
+                Text("Hola, $firstName", fontSize = 30.sp, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(20.dp))
+                CaloriasCard(consumidas = caloriasConsumidas, objetivo = caloriasObjetivo)
+                Spacer(Modifier.height(28.dp))
+            }
 
-            Spacer(Modifier.height(20.dp))
+            // 2. Contenido estático: Macros
+            item {
+                Text("Macronutrientes", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(12.dp))
+                MacrosCard(
+                    proteinasConsumidas = proteinasConsumidas,
+                    proteinasObjetivo   = proteinasObjetivo,
+                    carbosConsumidos    = carbosConsumidos,
+                    carbosObjetivo      = carbosObjetivo,
+                    grasasConsumidas    = grasasConsumidas,
+                    grasasObjetivo      = grasasObjetivo
+                )
+                Spacer(Modifier.height(28.dp))
+            }
 
-            CaloriasCard(consumidas = caloriasConsumidas, objetivo = caloriasObjetivo)
+            // 3. Título de Comidas
+            item {
+                Text("Comidas de hoy", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(12.dp))
+            }
 
-            Spacer(Modifier.height(28.dp))
-
-            Text("Macronutrientes", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(12.dp))
-
-            MacrosCard(
-                proteinasConsumidas = proteinasConsumidas,
-                proteinasObjetivo   = proteinasObjetivo,
-                carbosConsumidos    = carbosConsumidos,
-                carbosObjetivo      = carbosObjetivo,
-                grasasConsumidas    = grasasConsumidas,
-                grasasObjetivo      = grasasObjetivo
-            )
-
-            Spacer(Modifier.height(28.dp))
-
-            Text("Comidas de hoy", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(12.dp))
-
+            // 4. Lista Dinámica
             if (comidas.isEmpty()) {
-                Text("Aún no registraste comidas hoy", color = Color.Gray, fontSize = 14.sp)
+                item {
+                    Text("Aún no registraste comidas hoy", color = Color.Gray, fontSize = 14.sp)
+                }
             } else {
-                comidas.forEach { comida ->
+                // Usamos 'items' en lugar de un 'forEach'
+                items(
+                    items = comidas,
+                    key = { comida -> comida.id } // Usar un 'key' mejora muchísimo el rendimiento de Compose
+                ) { comida ->
                     ComidaItem(
                         comida  = comida,
                         onClick = { onComidaClick(comida.id) }
                     )
                 }
             }
-
-            Spacer(Modifier.height(80.dp))
         }
 
+        // El FloatingActionButton se mantiene igual, flotando por encima del LazyColumn
         FloatingActionButton(
             onClick        = onAddMeal,
             containerColor = GreenPrimary,

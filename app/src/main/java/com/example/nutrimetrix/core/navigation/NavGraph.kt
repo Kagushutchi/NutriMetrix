@@ -186,7 +186,4 @@ fun NavGraph(
     }
 }
 
-@Composable
-private fun PlaceholderScreen(name: String) {
-    androidx.compose.material3.Text(text = "Pantalla: $name — en construcción")
-}
+
