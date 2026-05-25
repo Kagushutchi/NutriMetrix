@@ -38,6 +38,12 @@ android {
             "GEMINI_API_KEY",
             "\"${localProps.getProperty("GEMINI_API_KEY", "")}\""
         )
+
+        buildConfigField(
+            "String",
+            "IMGBB_API_KEY",
+            "\"${localProps.getProperty("IMGBB_API_KEY", "")}\""
+        )
     }
 
 
@@ -94,8 +100,9 @@ dependencies {
     implementation(libs.firebase.auth.ktx)
     implementation(libs.firebase.firestore.ktx)
 
-    // ── Glide ────────────────────────────────────────────────────
+    // ── Glide ──────────────────────────────────────────────────────
     implementation(libs.glide)
+    implementation(libs.glide.compose)
 
     // ── Coroutines ───────────────────────────────────────────────
     implementation(libs.kotlinx.coroutines.android)
@@ -118,12 +125,7 @@ dependencies {
     implementation("androidx.camera:camera-lifecycle:1.3.4")
     implementation("androidx.camera:camera-view:1.3.4")
 
-// Coil — para mostrar la foto capturada
-    implementation("io.coil-kt:coil-compose:2.6.0")
-
 // Accompanist — permiso de cámara con Compose
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")
     implementation("com.google.guava:guava:32.1.3-android")
-// Firebase Storage — para guardar la imagen
-    implementation("com.google.firebase:firebase-storage-ktx")
 }

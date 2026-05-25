@@ -4,14 +4,10 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
-import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
-import androidx.camera.core.Preview
-import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.nutrimetrix.BuildConfig
@@ -21,11 +17,11 @@ import com.example.nutrimetrix.data.remote.api.GeminiInlineData
 import com.example.nutrimetrix.data.remote.api.GeminiRequest
 import com.example.nutrimetrix.data.remote.api.GeminiRequestContent
 import com.example.nutrimetrix.data.remote.api.GeminiRequestPart
+import com.example.nutrimetrix.data.remote.api.ImgBBApiService
 import com.example.nutrimetrix.data.remote.api.UsdaApiService
 import com.example.nutrimetrix.data.remote.dto.IngredienteDetectado
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
 import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -38,9 +34,6 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.Base64
 import javax.inject.Inject
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
 import androidx.core.graphics.scale
 
 // ── Estados ───────────────────────────────────────────────────────────────────
@@ -65,6 +58,7 @@ sealed class CameraUiState {
 class CameraViewModel @Inject constructor(
     private val geminiApi:    GeminiApiService,
     private val usdaApi:      UsdaApiService,
+    private val imgBBApi:     ImgBBApiService,
     private val firebaseAuth: FirebaseAuth,
     private val firestore:    FirebaseFirestore,
     @ApplicationContext private val context: Context
@@ -198,7 +192,7 @@ class CameraViewModel @Inject constructor(
         }
     }
 
-    // ── Guardar en Firestore + Storage ────────────────────────────────────────
+    // ── Guardar en Firestore + ImgBB ──────────────────────────────────────────
     fun guardarRegistro(onSuccess: () -> Unit) {
         val estado = _uiState.value as? CameraUiState.Result ?: return
         if (_tipoComida.value.isBlank()) return
@@ -208,8 +202,8 @@ class CameraViewModel @Inject constructor(
             try {
                 val uid = firebaseAuth.currentUser?.uid ?: throw Exception("Sin usuario")
 
-                // Subir imagen a Firebase Storage
-                val imageUrl = subirImagen(uid, estado.imageUri)
+                // Subir imagen a ImgBB y obtener URL pública
+                val imageUrl = subirImagenImgBB(estado.imageUri)
 
                 val comidaMap = mapOf(
                     "userId"        to uid,
@@ -239,6 +233,20 @@ class CameraViewModel @Inject constructor(
         }
     }
 
+    // ── Subir imagen a ImgBB ──────────────────────────────────────────────────
+    private suspend fun subirImagenImgBB(uri: Uri): String {
+        return try {
+            val base64 = uriToBase64(uri) ?: return ""
+            val response = imgBBApi.uploadImage(
+                apiKey      = BuildConfig.IMGBB_API_KEY,
+                base64Image = base64
+            )
+            response.data.url
+        } catch (e: Exception) {
+            ""
+        }
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
     private fun uriToBase64(uri: Uri): String? {
         return try {
@@ -265,16 +273,6 @@ class CameraViewModel @Inject constructor(
         } catch (e: Exception) {
             null
         }
-    }
-    private suspend fun subirImagen(uid: String, uri: Uri): String {
-        return try {
-            val ref = FirebaseStorage.getInstance()
-                .reference
-                .child("comidas/$uid/${System.currentTimeMillis()}.jpg")
-            val stream = context.contentResolver.openInputStream(uri) ?: return ""
-            ref.putStream(stream).await()
-            ref.downloadUrl.await().toString()
-        } catch (e: Exception) { "" }
     }
 
     private fun parseGeminiJson(rawText: String): com.example.nutrimetrix.data.remote.dto.GeminiAnalisisResult {

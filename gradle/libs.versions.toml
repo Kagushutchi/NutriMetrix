@@ -35,6 +35,7 @@ googleServices              = "4.4.2"       # plugin gradle
 
 # ── Glide ─────────────────────────────────────────────────────────────────────
 glide                       = "4.16.0"
+glideCompose                = "1.0.0-beta01"
 
 # ── Coroutines ────────────────────────────────────────────────────────────────
 coroutines                  = "1.9.0"
@@ -94,6 +95,7 @@ firebase-firestore-ktx              = { group = "com.google.firebase", name = "f
 
 # ── Glide ─────────────────────────────────────────────────────────────────────
 glide                               = { group = "com.github.bumptech.glide", name = "glide",                   version.ref = "glide" }
+glide-compose                       = { group = "com.github.bumptech.glide", name = "compose",                 version.ref = "glideCompose" }
 
 # ── Coroutines ────────────────────────────────────────────────────────────────
 kotlinx-coroutines-android          = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android",  version.ref = "coroutines" }

@@ -1,6 +1,7 @@
 package com.example.nutrimetrix.core.di
 
 import com.example.nutrimetrix.data.remote.api.GeminiApiService
+import com.example.nutrimetrix.data.remote.api.ImgBBApiService
 import com.example.nutrimetrix.data.remote.api.UsdaApiService
 import dagger.Module
 import dagger.Provides
@@ -64,4 +65,20 @@ object NetworkModule {
     @Singleton
     fun provideGeminiApiService(@Named("gemini") retrofit: Retrofit): GeminiApiService =
         retrofit.create(GeminiApiService::class.java)
-}
+
+    // ── ImgBB ─────────────────────────────────────────────────────────────────
+    @Provides
+    @Singleton
+    @Named("imgbb")
+    fun provideImgBBRetrofit(client: OkHttpClient): Retrofit =
+        Retrofit.Builder()
+            .baseUrl("https://api.imgbb.com/")
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+    @Provides
+    @Singleton
+    fun provideImgBBApiService(@Named("imgbb") retrofit: Retrofit): ImgBBApiService =
+        retrofit.create(ImgBBApiService::class.java)
+}
