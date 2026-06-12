@@ -2,18 +2,13 @@ package com.example.nutrimetrix.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.firebase.auth.FirebaseAuth
+import com.example.nutrimetrix.domain.repository.IAuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
-import android.content.Context
-import dagger.hilt.android.qualifiers.ApplicationContext
 
 sealed class SettingsUiState {
     object Idle      : SettingsUiState()
@@ -24,8 +19,7 @@ sealed class SettingsUiState {
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val firebaseAuth: FirebaseAuth,
-    @ApplicationContext private val context: Context
+    private val authRepository: IAuthRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<SettingsUiState>(SettingsUiState.Idle)
@@ -35,21 +29,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = SettingsUiState.Loading
             try {
-                // 1. Cerrar sesión en Firebase Auth
-                firebaseAuth.signOut()
-
-                // 2. Intentar revocar la sesión de Google
-                try {
-                    val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                        .requestEmail()
-                        .build()
-                    GoogleSignIn.getClient(context, gso).signOut().await()
-                } catch (e: Exception) {
-                    // Si falla revocar Google (ej. sin internet), ignoro
-                    // para permitir que el flujo de logout continúe.
-                }
-
-                // 3. Notificar a la vista que ya puede navegar al Login
+                authRepository.signOut().getOrThrow()
                 _uiState.value = SettingsUiState.LoggedOut
             } catch (e: Exception) {
                 _uiState.value = SettingsUiState.Error(e.message ?: "Error al cerrar sesión")

@@ -1,0 +1,28 @@
+package com.example.nutrimetrix.core.di
+
+import com.example.nutrimetrix.data.repository.AlimentoRepositoryImpl
+import com.example.nutrimetrix.data.repository.AuthRepositoryImpl
+import com.example.nutrimetrix.domain.repository.IAlimentoRepository
+import com.example.nutrimetrix.domain.repository.IAuthRepository
+import dagger.Binds
+import dagger.Module
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
+
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class RepositoryModule {
+
+    @Binds
+    @Singleton
+    abstract fun bindAuthRepository(
+        authRepositoryImpl: AuthRepositoryImpl
+    ): IAuthRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAlimentoRepository(
+        alimentoRepositoryImpl: AlimentoRepositoryImpl
+    ): IAlimentoRepository
+}

@@ -3,16 +3,15 @@ package com.example.nutrimetrix.ui.food.list
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.nutrimetrix.BuildConfig
-import com.example.nutrimetrix.data.mapper.toDomain
-import com.example.nutrimetrix.data.remote.api.UsdaApiService
 import com.example.nutrimetrix.domain.model.Alimento
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import com.example.nutrimetrix.domain.model.Comida
+import com.example.nutrimetrix.domain.repository.IAlimentoRepository
+import com.example.nutrimetrix.domain.repository.IAuthRepository
+import com.example.nutrimetrix.domain.usecase.SearchAlimentoUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 
@@ -46,9 +45,9 @@ sealed class SaveUiState {
 @OptIn(FlowPreview::class)
 @HiltViewModel
 class FoodListViewModel @Inject constructor(
-    private val usdaApi:      UsdaApiService,
-    private val firebaseAuth: FirebaseAuth,
-    private val firestore:    FirebaseFirestore
+    private val searchAlimentoUseCase: SearchAlimentoUseCase,
+    private val alimentoRepository:    IAlimentoRepository,
+    private val authRepository:        IAuthRepository
 ) : ViewModel() {
 
     // ── Búsqueda ──────────────────────────────────────────────────────────────
@@ -120,11 +119,7 @@ class FoodListViewModel @Inject constructor(
         viewModelScope.launch {
             _searchState.value = SearchUiState.Loading
             try {
-                val response = usdaApi.searchFoods(
-                    apiKey = BuildConfig.USDA_API_KEY,
-                    query  = query
-                )
-                val alimentos = response.foods.map { it.toDomain() }
+                val alimentos = searchAlimentoUseCase(query)
                 _searchState.value = SearchUiState.Success(alimentos)
             } catch (e: Exception) {
                 _searchState.value = SearchUiState.Error(e.message ?: "Error de búsqueda")
@@ -139,32 +134,28 @@ class FoodListViewModel @Inject constructor(
         viewModelScope.launch {
             _saveState.value = SaveUiState.Loading
             try {
-                val uid = firebaseAuth.currentUser?.uid
+                val uid = authRepository.getCurrentUserId()
                     ?: throw Exception("Sin usuario")
 
                 val nombres = _cart.value.joinToString(", ") { it.alimento.nombre }
 
-                val comidaMap = mapOf(
-                    "userId"        to uid,
-                    "nombre"        to nombres,
-                    "tipo"          to _tipoComida.value,
-                    "totalKcal"     to totalKcal,
-                    "proteinas"     to totalProteinas,
-                    "carbohidratos" to totalCarbos,
-                    "grasas"        to totalGrasas,
-                    "timestamp"     to com.google.firebase.Timestamp.now(),
-                    "fecha"         to java.text.SimpleDateFormat(
+                val comida = Comida(
+                    id            = "",
+                    userId        = uid,
+                    nombre        = nombres,
+                    tipo          = _tipoComida.value,
+                    totalKcal     = totalKcal,
+                    proteinas     = totalProteinas,
+                    carbohidratos = totalCarbos,
+                    grasas        = totalGrasas,
+                    timestamp     = java.util.Date(),
+                    fecha         = java.text.SimpleDateFormat(
                         "yyyy-MM-dd", java.util.Locale.getDefault()
                     ).format(java.util.Date()),
-                    "url"           to ""
+                    url           = ""
                 )
 
-                firestore
-                    .collection("usuarios")
-                    .document(uid)
-                    .collection("comidas")
-                    .add(comidaMap)
-                    .await()
+                alimentoRepository.saveComida(uid, comida).getOrThrow()
 
                 _saveState.value = SaveUiState.Success
                 _cart.value      = emptyList()

@@ -37,7 +37,6 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.rememberAsyncImagePainter
-import com.example.nutrimetrix.data.remote.dto.IngredienteDetectado
 import com.example.nutrimetrix.ui.theme.GreenDark
 import com.example.nutrimetrix.ui.theme.GreenLight
 import com.example.nutrimetrix.ui.theme.GreenPrimary
@@ -102,18 +101,18 @@ fun CameraScreen(
         is CameraUiState.Result -> {
             val r = uiState as CameraUiState.Result
             ResultScreen(
-                imageUri     = r.imageUri,
-                descripcion  = r.descripcion,
+                imageUri = r.imageUri,
+                descripcion = r.descripcion,
                 ingredientes = r.ingredientes,
-                totalKcal    = r.totalKcal,
-                proteinas    = r.proteinas,
-                carbos       = r.carbos,
-                grasas       = r.grasas,
-                tipoComida   = tipoComida,
+                totalKcal = r.totalKcal,
+                proteinas = r.proteinas,
+                carbos = r.carbos,
+                grasas = r.grasas,
+                tipoComida = tipoComida,
                 onTipoChange = { viewModel.onTipoComidaChange(it) },
-                onConfirm    = { viewModel.guardarRegistro(onNavigateBack) },
-                onRetry      = { viewModel.resetState() },
-                onClose      = { viewModel.resetState(); onNavigateBack() }
+                onConfirm = { viewModel.guardarRegistro(onNavigateBack) },
+                onRetry = { viewModel.resetState() },
+                onClose = { viewModel.resetState(); onNavigateBack() }
             )
         }
 
@@ -282,18 +281,18 @@ private fun PermissionScreen(onRequest: () -> Unit, onBack: () -> Unit) {
 // ── Pantalla de resultado del análisis ───────────────────────────────────────
 @Composable
 private fun ResultScreen(
-    imageUri:     Uri,
-    descripcion:  String,
-    ingredientes: List<IngredienteDetectado>,
-    totalKcal:    Double,
-    proteinas:    Double,
-    carbos:       Double,
-    grasas:       Double,
-    tipoComida:   String,
+    imageUri: Uri,
+    descripcion: String,
+    ingredientes: List<com.example.nutrimetrix.domain.model.IngredienteDetectado>,
+    totalKcal: Double,
+    proteinas: Double,
+    carbos: Double,
+    grasas: Double,
+    tipoComida: String,
     onTipoChange: (String) -> Unit,
-    onConfirm:    () -> Unit,
-    onRetry:      () -> Unit,
-    onClose:      () -> Unit
+    onConfirm: () -> Unit,
+    onRetry: () -> Unit,
+    onClose: () -> Unit
 ) {
     Column(
         modifier = Modifier

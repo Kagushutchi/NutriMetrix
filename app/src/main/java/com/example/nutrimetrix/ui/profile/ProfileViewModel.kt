@@ -2,14 +2,12 @@ package com.example.nutrimetrix.ui.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import com.example.nutrimetrix.domain.repository.IAuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 sealed class ProfileUiState {
@@ -28,8 +26,7 @@ sealed class ProfileUiState {
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
-    private val firebaseAuth: FirebaseAuth,
-    private val firestore: FirebaseFirestore
+    private val authRepository: IAuthRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ProfileUiState>(ProfileUiState.Loading)
@@ -42,19 +39,19 @@ class ProfileViewModel @Inject constructor(
      fun cargarPerfil() {
         viewModelScope.launch {
             try {
-                val uid = firebaseAuth.currentUser?.uid
+                val uid = authRepository.getCurrentUserId()
                     ?: throw Exception("Usuario no autenticado")
 
-                val doc = firestore.collection("usuarios").document(uid).get().await()
+                val userProfile = authRepository.getUserProfile(uid)
+                    ?: throw Exception("Perfil no encontrado")
 
-                val peso           = doc.getDouble("peso")          ?: 0.0
-                val altura         = (doc.getLong("altura")         ?: 0L).toInt()
-                val nivelActividad = doc.getString("nivel_actividad") ?: ""
-                val pesoIdeal      = doc.getDouble("peso_ideal")    ?: 0.0
-                val objetivo       = doc.getString("objetivo")      ?: ""
+                val peso           = userProfile.peso
+                val altura         = userProfile.altura
+                val nivelActividad = userProfile.nivelActividad
+                val pesoIdeal      = userProfile.pesoIdeal
+                val objetivo       = userProfile.objetivo
 
                 // Semanas transcurridas desde el registro
-                // Por ahora usamos 0 — en feature/room se puede guardar la fecha de inicio
                 val semanasTranscurridas = 0
 
                 // Semanas totales estimadas según diferencia de peso

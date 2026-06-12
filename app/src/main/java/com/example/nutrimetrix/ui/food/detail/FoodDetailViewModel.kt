@@ -3,14 +3,13 @@ package com.example.nutrimetrix.ui.food.detail
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import com.example.nutrimetrix.domain.repository.IAuthRepository
+import com.example.nutrimetrix.domain.usecase.GetAlimentosUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 data class ComidaDetalle(
@@ -34,9 +33,9 @@ sealed class FoodDetailUiState {
 
 @HiltViewModel
 class FoodDetailViewModel @Inject constructor(
-    private val firebaseAuth: FirebaseAuth,
-    private val firestore:    FirebaseFirestore,
-    savedStateHandle:         SavedStateHandle   // lee el foodId de la ruta
+    private val authRepository:      IAuthRepository,
+    private val getAlimentosUseCase: GetAlimentosUseCase,
+    savedStateHandle:                SavedStateHandle   // lee el foodId de la ruta
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<FoodDetailUiState>(FoodDetailUiState.Loading)
@@ -50,41 +49,29 @@ class FoodDetailViewModel @Inject constructor(
     private fun cargarDetalle() {
         viewModelScope.launch {
             try {
-                val uid = firebaseAuth.currentUser?.uid
+                val uid = authRepository.getCurrentUserId()
                     ?: throw Exception("Usuario no autenticado")
 
-                val doc = firestore
-                    .collection("usuarios")
-                    .document(uid)
-                    .collection("comidas")
-                    .document(foodId)
-                    .get()
-                    .await()
+                val comida = getAlimentosUseCase.getDetalle(uid, foodId)
+                    ?: throw Exception("Comida no encontrada")
 
-                if (!doc.exists()) throw Exception("Comida no encontrada")
-
-                val timestamp = doc.getTimestamp("timestamp")
-                val fecha = timestamp?.let {
-                    java.text.SimpleDateFormat("d MMMM yyyy", java.util.Locale("es"))
-                        .format(it.toDate())
-                } ?: ""
-                val hora = timestamp?.let {
-                    java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
-                        .format(it.toDate())
-                } ?: ""
+                val fecha = java.text.SimpleDateFormat("d MMMM yyyy", java.util.Locale("es"))
+                    .format(comida.timestamp)
+                val hora = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+                    .format(comida.timestamp)
 
                 _uiState.value = FoodDetailUiState.Success(
                     ComidaDetalle(
-                        id        = doc.id,
-                        tipo      = doc.getString("tipo")     ?: "",
-                        nombre    = doc.getString("nombre")   ?: "",
-                        totalKcal = doc.getDouble("totalKcal")     ?: 0.0,
-                        proteinas = doc.getDouble("proteinas")     ?: 0.0,
-                        carbos    = doc.getDouble("carbohidratos") ?: 0.0,
-                        grasas    = doc.getDouble("grasas")        ?: 0.0,
+                        id        = comida.id,
+                        tipo      = comida.tipo,
+                        nombre    = comida.nombre,
+                        totalKcal = comida.totalKcal,
+                        proteinas = comida.proteinas,
+                        carbos    = comida.carbohidratos,
+                        grasas    = comida.grasas,
                         fecha     = fecha,
                         hora      = hora,
-                        imageUrl  = doc.getString("url") ?: ""
+                        imageUrl  = comida.url
                     )
                 )
             } catch (e: Exception) {
