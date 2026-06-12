@@ -16,6 +16,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import javax.inject.Inject
 
+
 // ── Modelo de una comida para mostrar en la galería ───────────────────────────
 data class ComidaGaleria(
     val id:         String,

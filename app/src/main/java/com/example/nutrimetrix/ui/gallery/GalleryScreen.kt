@@ -18,12 +18,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
 import com.example.nutrimetrix.ui.theme.GreenPrimary
 import com.example.nutrimetrix.ui.theme.NutriMetrixTheme
 
@@ -42,9 +45,11 @@ fun GalleryScreen(
     viewModel:     GalleryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
     LaunchedEffect(Unit) {
         viewModel.cargarGaleria()
     }
+
     Box(modifier = Modifier.fillMaxSize()) {
 
         Column(
@@ -95,7 +100,7 @@ fun GalleryScreen(
                         }
                     } else {
                         LazyVerticalGrid(
-                            columns             = GridCells.Fixed(2),
+                            columns               = GridCells.Fixed(2),
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                             verticalArrangement   = Arrangement.spacedBy(12.dp),
                             contentPadding        = PaddingValues(bottom = 100.dp)
@@ -131,6 +136,7 @@ fun GalleryScreen(
     }
 }
 
+@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 private fun ComidaGaleriaCard(
     comida:    ComidaGaleria,
@@ -141,12 +147,43 @@ private fun ComidaGaleriaCard(
         modifier = Modifier
             .aspectRatio(0.85f)
             .clip(RoundedCornerShape(18.dp))
-            .background(Brush.verticalGradient(gradiente))
             .clickable { onClick() }
-            .padding(14.dp)
     ) {
+        // ── Fondo de la tarjeta (Imagen o Gradiente) ──
+        if (comida.imageUrl.isNotBlank()) {
+            // Renderizamos la imagen con Glide
+            GlideImage(
+                model = comida.imageUrl,
+                contentDescription = "Imagen de ${comida.tipo}",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+
+            // Overlay oscuro para que el texto blanco contraste bien sobre la foto
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f)),
+                            startY = 150f
+                        )
+                    )
+            )
+        } else {
+            // Fallback al gradiente si no hay URL cargada
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Brush.verticalGradient(gradiente))
+            )
+        }
+
+        // ── Contenido de texto superpuesto ──
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(14.dp),
             verticalArrangement = Arrangement.Bottom
         ) {
             // Fecha y hora
@@ -204,7 +241,7 @@ private fun ComidaGaleriaCard(
 fun GalleryScreenPreview() {
     NutriMetrixTheme {
         val previewComidas = listOf(
-            ComidaGaleria("1", "DESAYUNO",  "Avena, banana",  220.0, 8.0,  40.0, 4.0,  "12 Abril", "09:30", ""),
+            ComidaGaleria("1", "DESAYUNO",  "Avena, banana",  220.0, 8.0,  40.0, 4.0,  "12 Abril", "09:30", "https://i.ibb.co/example.jpg"), // Simulación con URL
             ComidaGaleria("2", "CENA",      "Pollo, ensalada",500.0, 35.0, 20.0, 18.0, "12 Abril", "22:00", ""),
             ComidaGaleria("3", "ALMUERZO",  "Arroz, carne",   450.0, 30.0, 55.0, 10.0, "12 Abril", "13:00", ""),
             ComidaGaleria("4", "MERIENDA",  "Yogur, frutas",  300.0, 10.0, 45.0, 5.0,  "12 Abril", "17:00", ""),

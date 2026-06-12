@@ -35,6 +35,7 @@ import java.io.File
 import java.util.Base64
 import javax.inject.Inject
 import androidx.core.graphics.scale
+import android.util.Log
 
 // ── Estados ───────────────────────────────────────────────────────────────────
 sealed class CameraUiState {
@@ -243,38 +244,71 @@ class CameraViewModel @Inject constructor(
             )
             response.data.url
         } catch (e: Exception) {
+            android.util.Log.e("ImgBB_Error", "Fallo al subir a ImgBB", e)
             ""
         }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+
+// ...
+
     private fun uriToBase64(uri: Uri): String? {
         return try {
-            val stream = context.contentResolver.openInputStream(uri) ?: return null
-            val originalBitmap = BitmapFactory.decodeStream(stream)
+            val resolver = context.contentResolver
 
-            // Calcular el factor de escala para un máximo de 800 píxeles
-            val maxSize = 800
-            val width = originalBitmap.width
-            val height = originalBitmap.height
-            val ratio = maxSize.toFloat() / maxOf(width, height)
-
-            // Redimensionar solo si la imagen es más grande que el máximo permitido
-            val finalBitmap = if (ratio < 1.0f) {
-                originalBitmap.scale((width * ratio).toInt(), (height * ratio).toInt())
-            } else {
-                originalBitmap
+            // 1. Leer solo las dimensiones de la imagen (NO la carga en memoria)
+            val options = BitmapFactory.Options().apply {
+                inJustDecodeBounds = true
+            }
+            resolver.openInputStream(uri)?.use { stream ->
+                BitmapFactory.decodeStream(stream, null, options)
             }
 
+            // 2. Calcular el factor de reducción (achica en potencias de 2)
+            val maxSize = 800
+            options.inSampleSize = calculateInSampleSize(options, maxSize, maxSize)
+
+            // 3. Ahora sí, cargar la imagen ya reducida en la memoria RAM
+            options.inJustDecodeBounds = false
+            val reducedBitmap = resolver.openInputStream(uri)?.use { stream ->
+                BitmapFactory.decodeStream(stream, null, options)
+            } ?: return null
+
+            // 4. Comprimir a JPEG (calidad 70) y convertir a Base64
             val out = ByteArrayOutputStream()
-            // Comprimir el bitmap redimensionado
-            finalBitmap.compress(Bitmap.CompressFormat.JPEG, 70, out)
-            Base64.getEncoder().encodeToString(out.toByteArray())
+            reducedBitmap.compress(Bitmap.CompressFormat.JPEG, 70, out)
+
+            val imageBytes = out.toByteArray()
+            // Opcional: Imprimir el peso en KB para confirmar que es pequeña
+            Log.d("ImageSize", "Tamaño final de la imagen: ${imageBytes.size / 1024} KB")
+
+            Base64.getEncoder().encodeToString(imageBytes)
+
         } catch (e: Exception) {
+            Log.e("CameraViewModel", "Error procesando imagen para Base64", e)
             null
         }
     }
 
+    private fun calculateInSampleSize(options: BitmapFactory.Options, reqWidth: Int, reqHeight: Int): Int {
+        val height = options.outHeight
+        val width = options.outWidth
+        var inSampleSize = 1
+
+        if (height > reqHeight || width > reqWidth) {
+            val halfHeight: Int = height / 2
+            val halfWidth: Int = width / 2
+
+            // Calcula el mayor valor inSampleSize que sea potencia de 2 y
+            // mantenga el ancho y alto mayores al requerido
+            while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
+                inSampleSize *= 2
+            }
+        }
+        return inSampleSize
+    }
     private fun parseGeminiJson(rawText: String): com.example.nutrimetrix.data.remote.dto.GeminiAnalisisResult {
         val json = rawText.replace("```json", "").replace("```", "").trim()
         return try {

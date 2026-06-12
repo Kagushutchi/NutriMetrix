@@ -17,12 +17,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
 import com.example.nutrimetrix.ui.theme.GreenDark
 import com.example.nutrimetrix.ui.theme.GreenLight
 import com.example.nutrimetrix.ui.theme.GreenPrimary
@@ -59,6 +62,7 @@ fun FoodDetailScreen(
     }
 }
 
+@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 private fun FoodDetailContent(comida: ComidaDetalle, onBack: () -> Unit) {
 
@@ -68,17 +72,44 @@ private fun FoodDetailContent(comida: ComidaDetalle, onBack: () -> Unit) {
             .verticalScroll(rememberScrollState())
     ) {
 
-        // ── Header con gradiente ──────────────────────────────────────────────
+        // ── Header con gradiente o imagen ─────────────────────────────────────
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(220.dp)
-                .background(
-                    Brush.verticalGradient(
-                        listOf(Color(0xFFFF8C00), Color(0xFFFF3B30))
-                    )
-                )
         ) {
+            // Fondo dinámico: Imagen o Gradiente original
+            if (comida.imageUrl.isNotBlank()) {
+                GlideImage(
+                    model = comida.imageUrl,
+                    contentDescription = "Imagen de la comida",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+                // Sombreado para que el texto blanco contraste bien
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f)),
+                                startY = 100f
+                            )
+                        )
+                )
+            } else {
+                // Gradiente original naranja/rojo
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(Color(0xFFFF8C00), Color(0xFFFF3B30))
+                            )
+                        )
+                )
+            }
+
             // Botón volver
             IconButton(
                 onClick  = onBack,
