@@ -1,6 +1,7 @@
 package com.example.nutrimetrix.ui.auth.login
 
 import android.app.Activity
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -54,7 +55,10 @@ fun LoginScreen(
                     .getResult(ApiException::class.java)
                 account.idToken?.let { viewModel.signInWithGoogle(it) }
             } catch (e: ApiException) {
+                Log.e("LoginScreen", "Google Sign-In failed: status code = ${e.statusCode}, message = ${e.message}", e)
             }
+        } else {
+            Log.w("LoginScreen", "Google Sign-In activity result not OK: ${result.resultCode}")
         }
     }
 
