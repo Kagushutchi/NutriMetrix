@@ -20,6 +20,10 @@ import com.example.nutrimetrix.domain.model.Alimento
 import com.example.nutrimetrix.domain.model.AnalisisComidaIa
 import com.example.nutrimetrix.domain.model.Comida
 import com.example.nutrimetrix.domain.model.IngredienteDetectado as DomainIngredienteDetectado
+import com.example.nutrimetrix.data.local.dao.AlimentoDao
+import com.example.nutrimetrix.data.local.dao.ComidaDao
+import com.example.nutrimetrix.data.local.entity.toDomain
+import com.example.nutrimetrix.data.local.entity.toEntity
 import com.example.nutrimetrix.domain.repository.IAlimentoRepository
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
@@ -29,6 +33,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.io.ByteArrayOutputStream
 import java.util.Base64
@@ -42,16 +48,26 @@ class AlimentoRepositoryImpl @Inject constructor(
     private val geminiApi:    GeminiApiService,
     private val imgBBApi:     ImgBBApiService,
     private val firestore:    FirebaseFirestore,
+    private val alimentoDao:  AlimentoDao,
+    private val comidaDao:    ComidaDao,
     @ApplicationContext private val context: Context
 ) : IAlimentoRepository {
 
     override suspend fun searchAlimentos(query: String): List<Alimento> {
+        val trimmedQuery = query.trim()
+        val cached = alimentoDao.searchAlimentos(trimmedQuery)
+        if (cached.isNotEmpty()) {
+            return cached.map { it.toDomain() }
+        }
         return try {
             val response = usdaApi.searchFoods(
                 apiKey = BuildConfig.USDA_API_KEY,
                 query  = query
             )
-            response.foods.map { it.toDomain() }
+            val domainList = response.foods.map { it.toDomain() }
+            val entities = domainList.map { it.toEntity(trimmedQuery) }
+            alimentoDao.insertAlimentos(entities)
+            domainList
         } catch (e: Exception) {
             emptyList()
         }
@@ -59,71 +75,136 @@ class AlimentoRepositoryImpl @Inject constructor(
 
     override suspend fun saveComida(userId: String, comida: Comida): Result<Unit> {
         return try {
-            val comidaMap = mapOf(
-                "userId"        to comida.userId,
-                "nombre"        to comida.nombre,
-                "tipo"          to comida.tipo,
-                "totalKcal"     to comida.totalKcal,
-                "proteinas"     to comida.proteinas,
-                "carbohidratos" to comida.carbohidratos,
-                "grasas"        to comida.grasas,
-                "timestamp"     to Timestamp(comida.timestamp),
-                "fecha"         to comida.fecha,
-                "url"           to comida.url
-            )
-            firestore.collection("usuarios").document(userId)
-                .collection("comidas").add(comidaMap).await()
+            val docRef = if (comida.id.isNotEmpty()) {
+                firestore.collection("usuarios").document(userId).collection("comidas").document(comida.id)
+            } else {
+                firestore.collection("usuarios").document(userId).collection("comidas").document()
+            }
+            val finalId = docRef.id
+            val finalComida = comida.copy(id = finalId)
+            
+            var isSynced = false
+            try {
+                val comidaMap = mapOf(
+                    "userId"        to finalComida.userId,
+                    "nombre"        to finalComida.nombre,
+                    "tipo"          to finalComida.tipo,
+                    "totalKcal"     to finalComida.totalKcal,
+                    "proteinas"     to finalComida.proteinas,
+                    "carbohidratos" to finalComida.carbohidratos,
+                    "grasas"        to finalComida.grasas,
+                    "timestamp"     to Timestamp(finalComida.timestamp),
+                    "fecha"         to finalComida.fecha,
+                    "url"           to finalComida.url
+                )
+                docRef.set(comidaMap).await()
+                isSynced = true
+            } catch (e: Exception) {
+                Log.e("AlimentoRepository", "Error syncing to Firestore, saving offline", e)
+            }
+
+            comidaDao.insertComida(finalComida.toEntity(isSynced = isSynced))
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    override fun getComidas(userId: String): Flow<List<Comida>> = callbackFlow {
-        val listener = firestore.collection("usuarios").document(userId)
+    override fun getComidas(userId: String): Flow<List<Comida>> = channelFlow {
+        val roomJob = launch {
+            comidaDao.getComidas(userId).collect { list ->
+                send(list.map { it.toDomain() })
+            }
+        }
+
+        val firestoreListener = firestore.collection("usuarios").document(userId)
             .collection("comidas")
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    Log.e("AlimentoRepository", "Error listening to Firestore", error)
                     return@addSnapshotListener
                 }
                 if (snapshot != null) {
-                    val list = snapshot.documents.mapNotNull { doc ->
-                        mapDocumentToComida(doc)
+                    val entities = snapshot.documents.mapNotNull { doc ->
+                        val comida = mapDocumentToComida(doc)
+                        comida?.toEntity(isSynced = true)
                     }
-                    trySend(list)
+                    if (entities.isNotEmpty()) {
+                        launch {
+                            try {
+                                comidaDao.insertComidas(entities)
+                            } catch (e: Exception) {
+                                Log.e("AlimentoRepository", "Error inserting remote meals into Room", e)
+                            }
+                        }
+                    }
                 }
             }
-        awaitClose { listener.remove() }
+
+        awaitClose {
+            roomJob.cancel()
+            firestoreListener.remove()
+        }
     }
 
-    override fun getComidasDeHoy(userId: String): Flow<List<Comida>> = callbackFlow {
+    override fun getComidasDeHoy(userId: String): Flow<List<Comida>> = channelFlow {
         val hoy = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
             .format(Date())
-        val listener = firestore.collection("usuarios").document(userId)
+            
+        val roomJob = launch {
+            comidaDao.getComidasDeHoy(userId, hoy).collect { list ->
+                send(list.map { it.toDomain() })
+            }
+        }
+
+        val firestoreListener = firestore.collection("usuarios").document(userId)
             .collection("comidas")
             .whereGreaterThanOrEqualTo("fecha", hoy)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    Log.e("AlimentoRepository", "Error listening to Firestore today", error)
                     return@addSnapshotListener
                 }
                 if (snapshot != null) {
-                    val list = snapshot.documents.mapNotNull { doc ->
-                        mapDocumentToComida(doc)
+                    val entities = snapshot.documents.mapNotNull { doc ->
+                        val comida = mapDocumentToComida(doc)
+                        comida?.toEntity(isSynced = true)
                     }
-                    trySend(list)
+                    if (entities.isNotEmpty()) {
+                        launch {
+                            try {
+                                comidaDao.insertComidas(entities)
+                            } catch (e: Exception) {
+                                Log.e("AlimentoRepository", "Error inserting remote meals today into Room", e)
+                            }
+                        }
+                    }
                 }
             }
-        awaitClose { listener.remove() }
+
+        awaitClose {
+            roomJob.cancel()
+            firestoreListener.remove()
+        }
     }
 
     override suspend fun getComidaById(userId: String, comidaId: String): Comida? {
         return try {
-            val doc = firestore.collection("usuarios").document(userId)
-                .collection("comidas").document(comidaId).get().await()
-            if (doc.exists()) mapDocumentToComida(doc) else null
+            val localComida = comidaDao.getComidaById(userId, comidaId)
+            if (localComida != null) {
+                localComida.toDomain()
+            } else {
+                val doc = firestore.collection("usuarios").document(userId)
+                    .collection("comidas").document(comidaId).get().await()
+                if (doc.exists()) {
+                    val comida = mapDocumentToComida(doc)
+                    if (comida != null) {
+                        comidaDao.insertComida(comida.toEntity(isSynced = true))
+                    }
+                    comida
+                } else null
+            }
         } catch (e: Exception) {
             null
         }
