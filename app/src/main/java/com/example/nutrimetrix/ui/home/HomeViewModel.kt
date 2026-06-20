@@ -87,7 +87,7 @@ class HomeViewModel @Inject constructor(
                         listaComidas.add(
                             ComidaResumen(
                                 id        = comida.id,
-                                nombre    = tipo.replaceFirstChar { it.uppercase() },
+                                nombre    = tipo.lowercase().replaceFirstChar { it.uppercase() },
                                 alimentos = nombre,
                                 calorias  = kcal
                             )

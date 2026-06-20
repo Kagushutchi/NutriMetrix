@@ -46,6 +46,7 @@ androidxJunit               = "1.2.1"
 espresso                    = "3.6.1"
 mockk                       = "1.13.13"
 turbine                     = "1.2.0"       # testear StateFlow / Flow
+archCore                    = "2.2.0"       # InstantTaskExecutorRule
 
 
 [libraries]
@@ -105,6 +106,7 @@ junit                               = { group = "junit",              name = "ju
 mockk                               = { group = "io.mockk",           name = "mockk",                           version.ref = "mockk" }
 kotlinx-coroutines-test             = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test",     version.ref = "coroutines" }
 turbine                             = { group = "app.cash.turbine",   name = "turbine",                         version.ref = "turbine" }
+arch-core-testing                   = { group = "androidx.arch.core", name = "core-testing",                    version.ref = "archCore" }
 androidx-junit                      = { group = "androidx.test.ext",  name = "junit",                           version.ref = "androidxJunit" }
 androidx-espresso-core              = { group = "androidx.test.espresso", name = "espresso-core",               version.ref = "espresso" }
 
