@@ -25,6 +25,8 @@ import com.example.nutrimetrix.data.local.dao.ComidaDao
 import com.example.nutrimetrix.data.local.entity.toDomain
 import com.example.nutrimetrix.data.local.entity.toEntity
 import com.example.nutrimetrix.domain.repository.IAlimentoRepository
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -36,6 +38,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeout
 import java.io.ByteArrayOutputStream
 import java.util.Base64
 import java.util.Date
@@ -84,23 +87,35 @@ class AlimentoRepositoryImpl @Inject constructor(
             val finalComida = comida.copy(id = finalId)
             
             var isSynced = false
-            try {
-                val comidaMap = mapOf(
-                    "userId"        to finalComida.userId,
-                    "nombre"        to finalComida.nombre,
-                    "tipo"          to finalComida.tipo,
-                    "totalKcal"     to finalComida.totalKcal,
-                    "proteinas"     to finalComida.proteinas,
-                    "carbohidratos" to finalComida.carbohidratos,
-                    "grasas"        to finalComida.grasas,
-                    "timestamp"     to Timestamp(finalComida.timestamp),
-                    "fecha"         to finalComida.fecha,
-                    "url"           to finalComida.url
-                )
-                docRef.set(comidaMap).await()
-                isSynced = true
-            } catch (e: Exception) {
-                Log.e("AlimentoRepository", "Error syncing to Firestore, saving offline", e)
+            val comidaMap = mapOf(
+                "userId"        to finalComida.userId,
+                "nombre"        to finalComida.nombre,
+                "tipo"          to finalComida.tipo,
+                "totalKcal"     to finalComida.totalKcal,
+                "proteinas"     to finalComida.proteinas,
+                "carbohidratos" to finalComida.carbohidratos,
+                "grasas"        to finalComida.grasas,
+                "timestamp"     to Timestamp(finalComida.timestamp),
+                "fecha"         to finalComida.fecha,
+                "url"           to finalComida.url
+            )
+
+            if (isNetworkAvailable()) {
+                try {
+                    withTimeout(2000L) {
+                        docRef.set(comidaMap).await()
+                    }
+                    isSynced = true
+                } catch (e: Exception) {
+                    Log.e("AlimentoRepository", "Error syncing to Firestore, saving offline", e)
+                }
+            } else {
+                Log.d("AlimentoRepository", "No network available. Queuing Firestore write offline.")
+                try {
+                    docRef.set(comidaMap)
+                } catch (e: Exception) {
+                    Log.e("AlimentoRepository", "Error queuing Firestore write offline", e)
+                }
             }
 
             comidaDao.insertComida(finalComida.toEntity(isSynced = isSynced))
@@ -390,6 +405,19 @@ class AlimentoRepositoryImpl @Inject constructor(
                 ingredientes  = listOf(DtoIngredienteDetectado("Ingrediente", 100.0)),
                 busquedasUsda = listOf("food")
             )
+        }
+    }
+
+    private fun isNetworkAvailable(): Boolean {
+        return try {
+            val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            val network = connectivityManager.activeNetwork ?: return false
+            val actCw = connectivityManager.getNetworkCapabilities(network) ?: return false
+            actCw.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                    actCw.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                    actCw.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
+        } catch (e: Exception) {
+            false
         }
     }
 }
