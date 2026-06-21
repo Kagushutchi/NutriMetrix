@@ -80,6 +80,7 @@ class HomeViewModelTest {
         Dispatchers.setMain(testDispatcher)
         authRepository      = mockk()
         getAlimentosUseCase = mockk()
+        every { authRepository.getCurrentUserName() } returns null
     }
 
     @After
@@ -221,5 +222,39 @@ class HomeViewModelTest {
         // Assert
         val state = viewModel.uiState.value as HomeUiState.Success
         assertEquals(2200, state.caloriasObjetivo)
+    }
+
+    @Test
+    fun `cargarDatosHome - tiene displayName - usa primer nombre en el saludo`() = runTest {
+        // Arrange
+        every { authRepository.getCurrentUserId() } returns "uid-test"
+        coEvery { authRepository.getUserProfile("uid-test") } returns testUser
+        every { authRepository.getCurrentUserName() } returns "Guillermo Fager"
+        every { getAlimentosUseCase.getDeHoy("uid-test") } returns flowOf(emptyList())
+
+        // Act
+        viewModel = buildViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Assert
+        val state = viewModel.uiState.value as HomeUiState.Success
+        assertEquals("Guillermo", state.firstName)
+    }
+
+    @Test
+    fun `cargarDatosHome - no tiene displayName - usa mail formateado capitalizado en el saludo`() = runTest {
+        // Arrange
+        every { authRepository.getCurrentUserId() } returns "uid-test"
+        coEvery { authRepository.getUserProfile("uid-test") } returns testUser.copy(mail = "gfage@test.com")
+        every { authRepository.getCurrentUserName() } returns null
+        every { getAlimentosUseCase.getDeHoy("uid-test") } returns flowOf(emptyList())
+
+        // Act
+        viewModel = buildViewModel()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Assert
+        val state = viewModel.uiState.value as HomeUiState.Success
+        assertEquals("Gfage", state.firstName)
     }
 }

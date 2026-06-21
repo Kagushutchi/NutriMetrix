@@ -57,7 +57,13 @@ class HomeViewModel @Inject constructor(
                 val userProfile = authRepository.getUserProfile(uid)
                     ?: throw Exception("Perfil no encontrado")
 
-                val firstName = userProfile.mail.split("@").firstOrNull() ?: "Usuario"
+                val displayName = authRepository.getCurrentUserName()
+                val firstName = if (!displayName.isNullOrBlank()) {
+                    displayName.split(" ").firstOrNull() ?: displayName
+                } else {
+                    val prefix = userProfile.mail.split("@").firstOrNull() ?: "Usuario"
+                    prefix.lowercase().replaceFirstChar { it.uppercase() }
+                }
                 val caloriasObjetivo  = userProfile.caloriasDiarias
                 val proteinasObjetivo = userProfile.proteinas
                 val carbosObjetivo    = userProfile.carbohidratos

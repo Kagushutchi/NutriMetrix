@@ -406,36 +406,43 @@ private fun CartBottomSheet(
             )
             Spacer(Modifier.height(16.dp))
 
-            cart.forEach { item ->
-                Row(
-                    modifier          = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(item.alimento.nombre, fontWeight = FontWeight.Medium)
-                        Text(
-                            "${"%.0f".format(item.gramos)}g · ${"%.1f".format(item.kcal)} kcal",
-                            fontSize = 12.sp,
-                            color    = Color.Gray
-                        )
+            // LazyColumn con key evita recomposiciones totales al modificar un solo ítem del carrito
+            LazyColumn {
+                items(
+                    items = cart,
+                    key   = { item -> item.alimento.fdcId }
+                ) { item ->
+                    Row(
+                        modifier          = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(item.alimento.nombre, fontWeight = FontWeight.Medium)
+                            Text(
+                                "${"%.0f".format(item.gramos)}g · ${"%.1f".format(item.kcal)} kcal",
+                                fontSize = 12.sp,
+                                color    = Color.Gray
+                            )
+                        }
+                        IconButton(onClick = { onRemove(item.alimento.fdcId) }) {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = "Eliminar",
+                                tint               = Color(0xFFE53935)
+                            )
+                        }
                     }
-                    IconButton(onClick = { onRemove(item.alimento.fdcId) }) {
-                        Icon(
-                            Icons.Default.Delete,
-                            contentDescription = "Eliminar",
-                            tint               = Color(0xFFE53935)
-                        )
-                    }
+                    HorizontalDivider(color = Color(0xFFF0F0F0))
                 }
-                HorizontalDivider(color = Color(0xFFF0F0F0))
             }
 
             Spacer(Modifier.height(24.dp))
         }
     }
 }
+
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable

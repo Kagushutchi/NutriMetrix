@@ -93,6 +93,30 @@ class GetCurrentUserUseCaseTest {
     }
 
     @Test
+    fun `getCurrentUserName - con sesion activa - retorna el displayName del repositorio`() {
+        // Arrange
+        every { repository.getCurrentUserName() } returns "Guillermo Fager"
+
+        // Act
+        val result = useCase.getCurrentUserName()
+
+        // Assert
+        assertEquals("Guillermo Fager", result)
+    }
+
+    @Test
+    fun `getCurrentUserName - sin sesion activa - retorna null`() {
+        // Arrange
+        every { repository.getCurrentUserName() } returns null
+
+        // Act
+        val result = useCase.getCurrentUserName()
+
+        // Assert
+        assertNull(result)
+    }
+
+    @Test
     fun `isLoggedIn - con sesion activa - retorna true`() {
         // Arrange
         every { repository.getCurrentUserId() } returns "uid-test"

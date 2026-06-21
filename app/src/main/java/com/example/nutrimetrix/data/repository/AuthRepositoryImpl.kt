@@ -92,6 +92,10 @@ class AuthRepositoryImpl @Inject constructor(
         return firebaseAuth.currentUser?.email
     }
 
+    override fun getCurrentUserName(): String? {
+        return firebaseAuth.currentUser?.displayName
+    }
+
     override suspend fun signOut(): Result<Unit> {
         return try {
             firebaseAuth.signOut()

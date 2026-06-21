@@ -34,6 +34,11 @@ interface IAuthRepository {
     fun getCurrentUserEmail(): String?
 
     /**
+     * Retorna el nombre visible del usuario actual logueado (ej: de Google Auth), o null si no hay sesión activa.
+     */
+    fun getCurrentUserName(): String?
+
+    /**
      * Cierra la sesión del usuario actual en Firebase y Google Sign-In.
      */
     suspend fun signOut(): Result<Unit>

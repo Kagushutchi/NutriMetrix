@@ -24,6 +24,11 @@ class GetCurrentUserUseCase @Inject constructor(
     fun getCurrentUserEmail(): String? = repository.getCurrentUserEmail()
 
     /**
+     * Retorna el nombre visible del usuario actualmente logueado, o null si no hay sesión activa.
+     */
+    fun getCurrentUserName(): String? = repository.getCurrentUserName()
+
+    /**
      * Verifica si hay una sesión activa. Útil para decisiones de navegación en el Splash.
      */
     fun isLoggedIn(): Boolean = repository.getCurrentUserId() != null
